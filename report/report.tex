@@ -27,6 +27,7 @@
 \usepackage{tgbonum}
 \usepackage{hyperref}
 \usepackage{xcolor}
+\usepackage{amsmath,amssymb}
 
 \newcommand{\HRule}[1]{\rule{\linewidth}{#1}}
 \onehalfspacing
@@ -106,13 +107,74 @@ Eventually, it could also be interesting to analyse the cantonal production/cons
     \caption{Relative difference between energy production and consumption computed as $d(a,b) = 2\frac{a-b}{a+b}$}
     \label{rel_dif}
 \end{figure}
+\section{Time Series Analysis}
+% TODO add the description and comment to the classical threatment of the time series
 
+\section{Multiple equation Time Series}
+In this section we will propose a different method for the time series forecasting. In particular we will gradually create a multi equation model for the energy consumption forecasting. This paragraph is mainly focus on the work of \cite{quteprints95170}.
+\subsection{A prototype model}
+As seen in the previous paragraphs the energy consumption shows both a daily and weekly seasonality. So, it seems reasonable to start our model construction from an ARMA structure of the form
+\begin{equation*}
+L_h_d = \theta_{h0} + \theta_{h1}L_{h d-1} + \theta_{h2}L_{h d-7} + \phi_{h1]\varepsilon_{h d-1} + \psi_{h2}\varepsilon_{h d-7} + \varepsilon_{hd},
+\end{equation*}
+where L_{hd} is the load at time h of day d and $\varepsilon_{hd}$ is the disturbance term. Since we are using a half-hourly(?) sampled time series the index $h$ goes from $1$ to $48$. This kind of model reflects the idea that the energy load is correlated with the loads at the same half-hour in both the previous day and week.\\
+The first important factor we have to add to the model is the public holiday information. In fact, the energy consumption is obviously infuenced by vacations. In order to economize on the number of parameters the vacation days are categorized in 6 groups: 4 unique special days (Good Friday, Easter Monday, Christmas day and New Years) and 2 switzerland bank holidays (1st of August and 20th September).\\ % TODO check if it true with Pietro
+It is obvious that temperature must be taken into account too. The effect of high and low temperature must be threated in different ways and with this purpose the paper authors proposed the following piecewise linear specification:
+\begin{equation*}
+\mathbb{C}_{1hd} = 
+\begin{cases}
+0, & T_{hd}\leq 22\\
+T_{hd} - 22, & 22 < T_{hd} \leq 30\\
+30 - 22, & 30 < T_{hd} 
+\end{cases}
+\end{equation*} 
+\begin{equation*}
+\mathbb{C}_{2hd} = 
+\begin{cases}
+0, & T_{hd}\leq 26\\
+T_{hd} - 26, & 26 < T_{hd} \leq 30\\
+30 - 26, & 30 < T_{hd}
+\end{cases}
+\end{equation*}   
+for the cooling degree temperature ranges and 
+\begin{equation*}
+\mathbb{H}_{1hd} = 
+\begin{cases}
+0, & 15 \leq T_{hd}\\
+15 - T_{hd}, & 9 \leq T_{hd} < 15\\
+15 - 9, & T_{hd} < 9
+\end{cases}
+\end{equation*}
+\begin{equation*}
+\mathbb{H}_{2hd} =
+\begin{cases}
+0, & 20 \leq T_{hd}\\
+20 - T_{hd}, & 9 \leq T_{hd} < 20\\
+20 - 9, & T_{hd} < 9
+\end{cases}
+\end{equation*} 
+%probably we should change the temperature range since we are in switzerland and not in Australia
+for the heating temperature ranges.\\
+Incorporating these modifications into our model we obtain
+\begin{gather}
+L_h_d = \theta_{h0} + \theta_{h1}L_{h d-1} + \theta_{h2}L_{h d-7} + \phi_{h1]\varepsilon_{h d-1} + \psi_{h2}\varepsilon_{h d-7} + 
+f^S_{hd} + f^T_{hd} + \varepsilon_{hd}\\
+f^S_{hd} = \sum_{j=1}^6 \left(\alpha_{jh1}\mathbb{S}_{jhd} + \alpha_{jh2}\mathbb{S}_{jhd-1}\right)\\
+f^T_{hd} = \sum_{k=1}^2\left\beta_{kh1}\mathbb{H}_{khd} + \beta_{kh2}\mathbb{C}_{khd} + \beta_{kh3}\mathbb{H}_{khd-1} + \beta_{kh4}\mathbb{C}_{khd-1} \right),
+\end{gather}
+where $f^S_{hd}$ and $f^T_{hd}$ are the special day and temperature effect respectively, $\mathbb{S}_jhd$ is the jth type of special day at half-hour interval h of day d.
+\subsection{Extentions to the prototype model}
 
 %-------------------------------------------------------------------------------
 % REFERENCES
 %-------------------------------------------------------------------------------
 % \newpage
 % \section*{References}
+
+\bibliography{mybib} 
+\bibliographystyle{ieeetr}
+
+
 
 %[2]John W. Eaton, David Bateman, Sren Hauberg, Rik Wehbring (2015). GNU
 %Octave version 4.0.0 manual: a high-level interactive language for numer-
