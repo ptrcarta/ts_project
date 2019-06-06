@@ -11,8 +11,8 @@ def _col_names(fname):
 
 def _load():
     years = []
-    for fname in os.listdir(DATA_DIR):
-        if '.xls' in fname:
+    for fname in sorted(os.listdir(DATA_DIR)):
+        if '.xls' == fname[-4:]:
             year_data = pd.read_excel(
                         DATA_DIR + fname,
                         sheet_name = 2,
@@ -23,9 +23,12 @@ def _load():
             years.append(year_data)
     d = pd.concat(years, sort=False)
     d.index.name = 'time'
-    d = d.sort_index()
+    #d = d.sort_index()
     #resample to get equally spaced (get rid of few holes and errors)
-    return d.resample('15 min').first()
+    #return d.resample('15 min').first()
+    #sorting and resampling is wrong, the whole and duplicate hours are due
+    # to the timeseries being in the "Europe/Zurich" timezones
+    return d
 
 _serialized = DATA_DIR + 'griddata.pkl'
 try:
